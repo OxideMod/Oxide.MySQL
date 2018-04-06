@@ -69,16 +69,22 @@ namespace Oxide.Core.MySql.Libraries
             public bool Handle()
             {
                 List<Dictionary<string, object>> list = null;
-                var nonQueryResult = 0;
-                var lastInsertRowId = 0L;
+                int nonQueryResult = 0;
+                long lastInsertRowId = 0L;
                 try
                 {
-                    if (Connection == null) throw new Exception("Connection is null");
+                    if (Connection == null)
+                    {
+                        throw new Exception("Connection is null");
+                    }
                     //if (_result == null)
                     //{
                     _connection = (MySqlConnection)Connection.Con;
                     if (_connection.State == ConnectionState.Closed)
+                    {
                         _connection.Open();
+                    }
+
                     _cmd = _connection.CreateCommand();
                     _cmd.CommandTimeout = 120;
                     _cmd.CommandText = Sql.SQL;
@@ -88,10 +94,12 @@ namespace Oxide.Core.MySql.Libraries
                     _result.AsyncWaitHandle.WaitOne();
                     //if (!_result.IsCompleted) return false;
                     if (NonQuery)
+                    {
                         nonQueryResult = _cmd.EndExecuteNonQuery(_result);
+                    }
                     else
                     {
-                        using (var reader = _cmd.EndExecuteReader(_result))
+                        using (MySqlDataReader reader = _cmd.EndExecuteReader(_result))
                         {
                             list = new List<Dictionary<string, object>>();
                             while (reader.Read())
@@ -101,7 +109,7 @@ namespace Oxide.Core.MySql.Libraries
                                     break;
                                 }
                                 var dict = new Dictionary<string, object>();
-                                for (var i = 0; i < reader.FieldCount; i++)
+                                for (int i = 0; i < reader.FieldCount; i++)
                                 {
                                     dict.Add(reader.GetName(i), reader.GetValue(i));
                                 }
@@ -114,8 +122,12 @@ namespace Oxide.Core.MySql.Libraries
                 }
                 catch (Exception ex)
                 {
-                    var message = "MySql handle raised an exception";
-                    if (Connection?.Plugin != null) message += $" in '{Connection.Plugin.Name} v{Connection.Plugin.Version}' plugin";
+                    string message = "MySql handle raised an exception";
+                    if (Connection?.Plugin != null)
+                    {
+                        message += $" in '{Connection.Plugin.Name} v{Connection.Plugin.Version}' plugin";
+                    }
+
                     Interface.Oxide.LogException(message, ex);
                     Cleanup();
                 }
@@ -124,16 +136,28 @@ namespace Oxide.Core.MySql.Libraries
                     Connection?.Plugin?.TrackStart();
                     try
                     {
-                        if (Connection != null) Connection.LastInsertRowId = lastInsertRowId;
+                        if (Connection != null)
+                        {
+                            Connection.LastInsertRowId = lastInsertRowId;
+                        }
+
                         if (!NonQuery)
+                        {
                             Callback(list);
+                        }
                         else
+                        {
                             CallbackNonQuery?.Invoke(nonQueryResult);
+                        }
                     }
                     catch (Exception ex)
                     {
-                        var message = "MySql command callback raised an exception";
-                        if (Connection?.Plugin != null) message += $" in '{Connection.Plugin.Name} v{Connection.Plugin.Version}' plugin";
+                        string message = "MySql command callback raised an exception";
+                        if (Connection?.Plugin != null)
+                        {
+                            message += $" in '{Connection.Plugin.Name} v{Connection.Plugin.Version}' plugin";
+                        }
+
                         Interface.Oxide.LogException(message, ex);
                     }
                     Connection?.Plugin?.TrackEnd();
@@ -160,11 +184,19 @@ namespace Oxide.Core.MySql.Libraries
                 lock (_syncroot)
                 {
                     if (_queue.Count > 0)
+                    {
                         query = _queue.Dequeue();
+                    }
                     else
                     {
-                        foreach (var connection in _runningConnections)
-                            if (connection != null && !connection.ConnectionPersistent) CloseDb(connection);
+                        foreach (Connection connection in _runningConnections)
+                        {
+                            if (connection != null && !connection.ConnectionPersistent)
+                            {
+                                CloseDb(connection);
+                            }
+                        }
+
                         _runningConnections.Clear();
                     }
                 }
@@ -172,11 +204,16 @@ namespace Oxide.Core.MySql.Libraries
                 {
                     query.Handle();
                     //if (!query.Handle()) continue;
-                    if (query.Connection != null) _runningConnections.Add(query.Connection);
+                    if (query.Connection != null)
+                    {
+                        _runningConnections.Add(query.Connection);
+                    }
                     //lock (_syncroot) _queue.Dequeue();
                 }
                 else if (_running)
+                {
                     _workevent.WaitOne();
+                }
             }
         }
 
@@ -190,7 +227,10 @@ namespace Oxide.Core.MySql.Libraries
         {
             Dictionary<string, Connection> connections;
             if (!_connections.TryGetValue(plugin?.Name ?? "null", out connections))
+            {
                 _connections[plugin?.Name ?? "null"] = connections = new Dictionary<string, Connection>();
+            }
+
             Connection connection;
             if (connections.TryGetValue(conStr, out connection))
             {
@@ -206,7 +246,10 @@ namespace Oxide.Core.MySql.Libraries
                 connections[conStr] = connection;
             }
             if (plugin != null && !_pluginRemovedFromManager.ContainsKey(plugin))
+            {
                 _pluginRemovedFromManager[plugin] = plugin.OnRemovedFromManager.Add(OnRemovedFromManager);
+            }
+
             return connection;
         }
 
@@ -217,9 +260,16 @@ namespace Oxide.Core.MySql.Libraries
             {
                 foreach (var connection in connections)
                 {
-                    if (connection.Value.Plugin != sender) continue;
+                    if (connection.Value.Plugin != sender)
+                    {
+                        continue;
+                    }
+
                     if (connection.Value.Con?.State != ConnectionState.Closed)
+                    {
                         Interface.Oxide.LogWarning("Unclosed mysql connection ({0}), by plugin '{1}', closing...", connection.Value.Con?.ConnectionString, connection.Value.Plugin?.Name ?? "null");
+                    }
+
                     connection.Value.Con?.Close();
                     connection.Value.Plugin = null;
                 }
@@ -236,7 +286,11 @@ namespace Oxide.Core.MySql.Libraries
         [LibraryFunction("CloseDb")]
         public void CloseDb(Connection db)
         {
-            if (db == null) return;
+            if (db == null)
+            {
+                return;
+            }
+
             Dictionary<string, Connection> connections;
             if (_connections.TryGetValue(db.Plugin?.Name ?? "null", out connections))
             {
@@ -268,27 +322,35 @@ namespace Oxide.Core.MySql.Libraries
         [LibraryFunction("Query")]
         public void Query(Sql sql, Connection db, Action<List<Dictionary<string, object>>> callback)
         {
-            var query = new MySqlQuery
+            MySqlQuery query = new MySqlQuery
             {
                 Sql = sql,
                 Connection = db,
                 Callback = callback
             };
-            lock (_syncroot) _queue.Enqueue(query);
+            lock (_syncroot)
+            {
+                _queue.Enqueue(query);
+            }
+
             _workevent.Set();
         }
 
         [LibraryFunction("ExecuteNonQuery")]
         public void ExecuteNonQuery(Sql sql, Connection db, Action<int> callback = null)
         {
-            var query = new MySqlQuery
+            MySqlQuery query = new MySqlQuery
             {
                 Sql = sql,
                 Connection = db,
                 CallbackNonQuery = callback,
                 NonQuery = true
             };
-            lock (_syncroot) _queue.Enqueue(query);
+            lock (_syncroot)
+            {
+                _queue.Enqueue(query);
+            }
+
             _workevent.Set();
         }
 

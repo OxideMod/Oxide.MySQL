@@ -34,8 +34,6 @@ namespace Oxide.Core.MySql
         /// </summary>
         public override VersionNumber Version => AssemblyVersion;
 
-        private Libraries.MySql mySql;
-
         /// <summary>
         /// Initializes a new instance of the MySqlExtension class
         /// </summary>
@@ -46,7 +44,10 @@ namespace Oxide.Core.MySql
         /// <summary>
         /// Loads this extension
         /// </summary>
-        public override void Load() => Manager.RegisterLibrary("MySql", mySql = new Libraries.MySql());
+        public override void Load()
+        {
+            Manager.RegisterLibrary("MySql", new Libraries.MySql());
+        }
 
         /// <summary>
         /// Loads plugin watchers used by this extension
