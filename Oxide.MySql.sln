@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0
 MinimumVisualStudioVersion = 15.0
-Project("{D85E52AA-1E34-476A-AF4D-8F09BBEAA227}") = "Oxide.MySql", "Oxide.MySql\Oxide.MySql.csproj", "{D138493B-6F2E-4B9F-8F79-17B73422D87F}"
+Project("{D85E52AA-1E34-476A-AF4D-8F09BBEAA227}") = "Oxide.MySql", "src\Oxide.MySql.csproj", "{D138493B-6F2E-4B9F-8F79-17B73422D87F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
