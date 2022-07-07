@@ -12,17 +12,30 @@
     <PackageIconUrl>icon.png</PackageIconUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
-    <TargetFrameworks>net35;net40;net45;net46;net48;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net35;net40;net452;net462;net48</TargetFrameworks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <NoWarn>NU1701</NoWarn>
   </PropertyGroup>
+  <Choose>
+    <When Condition="'$(TargetFramework)' == 'net35' OR '$(TargetFramework)' == 'net40'">
+      <ItemGroup>
+        <Reference Include="MySql.Data">
+          <HintPath>..\dependencies\MySql.Data.dll</HintPath>
+        </Reference>
+        <None Include="..\dependencies\*" PackagePath="lib\net35" Pack="true" />
+        <None Include="..\dependencies\*" PackagePath="lib\net40" Pack="true" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <PackageReference Include="MySql.Data" Version="8.0.29" />
+        <None Include="$(OutputPath)**\MySql.Data.dll" PackagePath="lib" Pack="true" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
   <ItemGroup>
     <PackageReference Include="Oxide.Core" Version="2.0.*" />
-    <Reference Include="MySql.Data">
-      <HintPath>Dependencies\MySql.Data.dll</HintPath>
-    </Reference>
-    <Content Include="Dependencies\*.*" PackagePath="lib\any" />
-    <None Include="..\resources\icon.png" Pack="true" PackagePath="\" />
+    <None Include="..\resources\icon.png" PackagePath="\" Pack="true" />
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   <Target Name="ChangeAliasesOfStrongNameAssemblies" BeforeTargets="FindReferenceAssembliesForReferences;ResolveReferences">

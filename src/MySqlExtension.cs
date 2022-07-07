@@ -1,5 +1,6 @@
 ﻿using Oxide.Core.Extensions;
 using System;
+using System.IO;
 using System.Reflection;
 
 namespace Oxide.Core.MySql
@@ -62,6 +63,11 @@ namespace Oxide.Core.MySql
         /// </summary>
         public override void OnModLoad()
         {
+            AssemblyName assemblyName = AssemblyName.GetAssemblyName(Path.Combine(Interface.Oxide.ExtensionDirectory, "MySQL.Data.dll"));
+            if (assemblyName != null)
+            {
+                Interface.Oxide.LogInfo($"MySQL connector version: {assemblyName.Version}");
+            }
         }
     }
 }

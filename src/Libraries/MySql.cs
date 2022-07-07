@@ -220,7 +220,8 @@ namespace Oxide.Core.MySql.Libraries
         [LibraryFunction("OpenDb")]
         public Connection OpenDb(string host, int port, string database, string user, string password, Plugin plugin, bool persistent = false)
         {
-            return OpenDb($"Server={host};Port={port};Database={database};User={user};Password={password};Pooling=false;default command timeout=120;Allow Zero Datetime=true;", plugin, persistent);
+            return OpenDb($"Server={host};Port={port};Database={database};User={user};Password={password};" +
+                $"Default Auth Plugin=mysql_native_password;Pooling=false;Default Command Timeout=120;Allow Zero Datetime=true;", plugin, persistent);
         }
 
         public Connection OpenDb(string conStr, Plugin plugin, bool persistent = false)
