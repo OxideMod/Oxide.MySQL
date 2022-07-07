@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <Import Project="..\netfx.props" />
@@ -22,8 +22,7 @@
         <Reference Include="MySql.Data">
           <HintPath>..\dependencies\MySql.Data.dll</HintPath>
         </Reference>
-        <None Include="..\dependencies\*" PackagePath="lib\net35" Pack="true" />
-        <None Include="..\dependencies\*" PackagePath="lib\net40" Pack="true" />
+        <None Include="..\dependencies\*" PackagePath="lib" Pack="true" />
       </ItemGroup>
     </When>
     <Otherwise>
