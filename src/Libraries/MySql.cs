@@ -234,7 +234,7 @@ namespace Oxide.Core.MySql.Libraries
             Connection connection;
             if (connections.TryGetValue(conStr, out connection))
             {
-                Interface.Oxide.LogWarning("Already open connection ({0}), using existing instead...", connection.Con?.ConnectionString);
+                Interface.Oxide.LogWarning("There is already an open connection, using existing connection instead...");
             }
             else
             {
