@@ -267,7 +267,7 @@ namespace Oxide.Core.MySql.Libraries
 
                     if (connection.Value.Con?.State != ConnectionState.Closed)
                     {
-                        Interface.Oxide.LogWarning("Unclosed mysql connection ({0}), by plugin '{1}', closing...", connection.Value.Con?.ConnectionString, connection.Value.Plugin?.Name ?? "null");
+                        Interface.Oxide.LogWarning("Unclosed MySQL connection from plugin '{1}', closing...", sender.Name);
                     }
 
                     connection.Value.Con?.Close();
