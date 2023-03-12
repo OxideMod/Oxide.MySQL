@@ -38,6 +38,12 @@ namespace Oxide.Core.MySql.Libraries
             public Action<int> CallbackNonQuery { get; internal set; }
 
             /// <summary>
+            /// Gets the callback delegate
+            /// </summary>
+            public Action<Exception> CallbackOnError { get; internal set; }
+
+
+            /// <summary>
             /// Gets the sql
             /// </summary>
             public Sql Sql { get; internal set; }
@@ -128,6 +134,7 @@ namespace Oxide.Core.MySql.Libraries
                         message += $" in '{Connection.Plugin.Name} v{Connection.Plugin.Version}' plugin";
                     }
 
+                    CallbackOnError?.Invoke(ex);
                     Interface.Oxide.LogException(message, ex);
                     Cleanup();
                 }
@@ -158,6 +165,7 @@ namespace Oxide.Core.MySql.Libraries
                             message += $" in '{Connection.Plugin.Name} v{Connection.Plugin.Version}' plugin";
                         }
 
+                        CallbackOnError?.Invoke(ex);
                         Interface.Oxide.LogException(message, ex);
                     }
                     Connection?.Plugin?.TrackEnd();
@@ -320,13 +328,14 @@ namespace Oxide.Core.MySql.Libraries
         }
 
         [LibraryFunction("Query")]
-        public void Query(Sql sql, Connection db, Action<List<Dictionary<string, object>>> callback)
+        public void Query(Sql sql, Connection db, Action<List<Dictionary<string, object>>> callback, Action<Exception> callbackOnError = null)
         {
             MySqlQuery query = new MySqlQuery
             {
                 Sql = sql,
                 Connection = db,
-                Callback = callback
+                Callback = callback,
+                CallbackOnError = callbackOnError
             };
             lock (_syncroot)
             {
@@ -337,14 +346,15 @@ namespace Oxide.Core.MySql.Libraries
         }
 
         [LibraryFunction("ExecuteNonQuery")]
-        public void ExecuteNonQuery(Sql sql, Connection db, Action<int> callback = null)
+        public void ExecuteNonQuery(Sql sql, Connection db, Action<int> callback = null, Action<Exception> callbackOnError = null)
         {
             MySqlQuery query = new MySqlQuery
             {
                 Sql = sql,
                 Connection = db,
                 CallbackNonQuery = callback,
-                NonQuery = true
+                NonQuery = true,
+                CallbackOnError = callbackOnError
             };
             lock (_syncroot)
             {
@@ -355,21 +365,21 @@ namespace Oxide.Core.MySql.Libraries
         }
 
         [LibraryFunction("Insert")]
-        public void Insert(Sql sql, Connection db, Action<int> callback = null)
+        public void Insert(Sql sql, Connection db, Action<int> callback = null, Action<Exception> callbackOnError = null)
         {
-            ExecuteNonQuery(sql, db, callback);
+            ExecuteNonQuery(sql, db, callback, callbackOnError);
         }
 
         [LibraryFunction("Update")]
-        public void Update(Sql sql, Connection db, Action<int> callback = null)
+        public void Update(Sql sql, Connection db, Action<int> callback = null, Action<Exception> callbackOnError = null)
         {
-            ExecuteNonQuery(sql, db, callback);
+            ExecuteNonQuery(sql, db, callback, callbackOnError);
         }
 
         [LibraryFunction("Delete")]
-        public void Delete(Sql sql, Connection db, Action<int> callback = null)
+        public void Delete(Sql sql, Connection db, Action<int> callback = null, Action<Exception> callbackOnError = null)
         {
-            ExecuteNonQuery(sql, db, callback);
+            ExecuteNonQuery(sql, db, callback, callbackOnError);
         }
 
         public override void Shutdown()
