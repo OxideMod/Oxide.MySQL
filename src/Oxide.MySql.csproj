@@ -14,15 +14,29 @@
     <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
     <TargetFrameworks>net35;net40;net45;net46;net48;netstandard2.0;netstandard2.1</TargetFrameworks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <NoWarn>NU1701</NoWarn>
+    <NoWarn>NU1701;NU5128</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Oxide.Core" Version="2.0.*" />
+    <Content Include="Dependencies\*.*" Exclude="Dependencies\MySql.Data.dll" PackagePath="lib\any" />
+    <None Include="..\resources\icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net35'">
     <Reference Include="MySql.Data">
       <HintPath>Dependencies\MySql.Data.dll</HintPath>
     </Reference>
-    <Content Include="Dependencies\*.*" PackagePath="lib\any" />
-    <None Include="..\resources\icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net40' Or '$(TargetFramework)' == 'net45' Or '$(TargetFramework)' == 'net46'">
+    <PackageReference Include="MySql.Data" Version="6.9.12" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48' Or '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="MySql.Data" Version="9.5.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Dependencies\MySql.Data.dll" Condition="Exists('Dependencies\MySql.Data.dll')">
+      <Pack>true</Pack>
+      <PackagePath>lib\net35</PackagePath>
+    </None>
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   <Target Name="ChangeAliasesOfStrongNameAssemblies" BeforeTargets="FindReferenceAssembliesForReferences;ResolveReferences">
