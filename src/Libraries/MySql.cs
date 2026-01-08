@@ -1,4 +1,8 @@
-﻿﻿using MySql.Data.MySqlClient;
+#if USE_MYSQLCONNECTOR
+using MySqlConnector;
+#else
+using MySql.Data.MySqlClient;
+#endif
 using Oxide.Core.Database;
 using Oxide.Core.Libraries;
 using Oxide.Core.Plugins;
@@ -17,10 +21,10 @@ namespace Oxide.Core.MySql.Libraries
         private readonly object _syncroot = new object();
         private readonly AutoResetEvent _workevent = new AutoResetEvent(false);
         private readonly HashSet<Connection> _runningConnections = new HashSet<Connection>();
-        private bool _running = true;
         private readonly Dictionary<string, Dictionary<string, Connection>> _connections = new Dictionary<string, Dictionary<string, Connection>>();
         private readonly Thread _worker;
         private readonly Dictionary<Plugin, Event.Callback<Plugin, PluginManager>> _pluginRemovedFromManager;
+        private bool _running = true;
 
         /// <summary>
         /// Represents a single MySqlQuery instance
@@ -54,7 +58,6 @@ namespace Oxide.Core.MySql.Libraries
 
             private MySqlCommand _cmd;
             private MySqlConnection _connection;
-            private IAsyncResult _result;
 
             private void Cleanup()
             {
@@ -77,8 +80,7 @@ namespace Oxide.Core.MySql.Libraries
                     {
                         throw new Exception("Connection is null");
                     }
-                    //if (_result == null)
-                    //{
+
                     _connection = (MySqlConnection)Connection.Con;
                     if (_connection.State == ConnectionState.Closed)
                     {
@@ -89,17 +91,14 @@ namespace Oxide.Core.MySql.Libraries
                     _cmd.CommandTimeout = 120;
                     _cmd.CommandText = Sql.SQL;
                     Sql.AddParams(_cmd, Sql.Arguments, "@");
-                    _result = NonQuery ? _cmd.BeginExecuteNonQuery() : _cmd.BeginExecuteReader();
-                    //}
-                    _result.AsyncWaitHandle.WaitOne();
-                    //if (!_result.IsCompleted) return false;
+
                     if (NonQuery)
                     {
-                        nonQueryResult = _cmd.EndExecuteNonQuery(_result);
+                        nonQueryResult = _cmd.ExecuteNonQuery();
                     }
                     else
                     {
-                        using (MySqlDataReader reader = _cmd.EndExecuteReader(_result))
+                        using (MySqlDataReader reader = _cmd.ExecuteReader())
                         {
                             list = new List<Dictionary<string, object>>();
                             while (reader.Read())
@@ -108,15 +107,18 @@ namespace Oxide.Core.MySql.Libraries
                                 {
                                     break;
                                 }
+
                                 var dict = new Dictionary<string, object>();
                                 for (int i = 0; i < reader.FieldCount; i++)
                                 {
                                     dict.Add(reader.GetName(i), reader.GetValue(i));
                                 }
+
                                 list.Add(dict);
                             }
                         }
                     }
+
                     lastInsertRowId = _cmd.LastInsertedId;
                     Cleanup();
                 }
@@ -131,6 +133,7 @@ namespace Oxide.Core.MySql.Libraries
                     Interface.Oxide.LogException(message, ex);
                     Cleanup();
                 }
+
                 Interface.Oxide.NextTick(() =>
                 {
                     Connection?.Plugin?.TrackStart();
@@ -160,6 +163,7 @@ namespace Oxide.Core.MySql.Libraries
 
                         Interface.Oxide.LogException(message, ex);
                     }
+
                     Connection?.Plugin?.TrackEnd();
                 });
                 return true;
@@ -200,6 +204,7 @@ namespace Oxide.Core.MySql.Libraries
                         _runningConnections.Clear();
                     }
                 }
+
                 if (query != null)
                 {
                     query.Handle();
@@ -251,6 +256,7 @@ namespace Oxide.Core.MySql.Libraries
                 };
                 connections[conStr] = connection;
             }
+
             if (plugin != null && !_pluginRemovedFromManager.ContainsKey(plugin))
             {
                 _pluginRemovedFromManager[plugin] = plugin.OnRemovedFromManager.Add(OnRemovedFromManager);
@@ -279,8 +285,10 @@ namespace Oxide.Core.MySql.Libraries
                     connection.Value.Con?.Close();
                     connection.Value.Plugin = null;
                 }
+
                 _connections.Remove(sender.Name);
             }
+
             Event.Callback<Plugin, PluginManager> event_callback;
             if (_pluginRemovedFromManager.TryGetValue(sender, out event_callback))
             {
@@ -315,6 +323,7 @@ namespace Oxide.Core.MySql.Libraries
                     }
                 }
             }
+
             db.Con?.Close();
             db.Plugin = null;
         }

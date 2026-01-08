@@ -1,7 +1,11 @@
-﻿#if NET35
+#if NET35
 using System.Security.Permissions;
 #endif
+#if USE_MYSQLCONNECTOR
+using MySqlConnector;
+#else
 using MySql.Data.MySqlClient;
+#endif
 using Oxide.Core.Plugins;
 
 namespace Oxide.Ext.MySql

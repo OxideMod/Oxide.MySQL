@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project>
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <Import Project="..\netfx.props" />
@@ -16,29 +16,39 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <NoWarn>NU1701;NU5128</NoWarn>
   </PropertyGroup>
+  <PropertyGroup>
+    <UseMySqlData>false</UseMySqlData>
+    <UseMySqlData Condition="'$(TargetFramework)' == 'net35' Or '$(TargetFramework)' == 'net40' Or '$(TargetFramework)' == 'net45' Or '$(TargetFramework)' == 'net46'">true</UseMySqlData>
+    <UseMySqlConnector>false</UseMySqlConnector>
+    <UseMySqlConnector Condition="'$(TargetFramework)' == 'net48' Or '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'netstandard2.1'">true</UseMySqlConnector>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(UseMySqlConnector)' == 'true'">
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <DefineConstants>$(DefineConstants);USE_MYSQLCONNECTOR</DefineConstants>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Oxide.Core" Version="2.0.*" />
-    <Content Include="Dependencies\*.*" Exclude="Dependencies\MySql.Data.dll" PackagePath="lib\any" />
     <None Include="..\resources\icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net35'">
-    <Reference Include="MySql.Data">
-      <HintPath>Dependencies\MySql.Data.dll</HintPath>
-    </Reference>
+    <Reference Include="MySql.Data" HintPath="Dependencies\MySql.Data.dll" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net40' Or '$(TargetFramework)' == 'net45' Or '$(TargetFramework)' == 'net46'">
-    <PackageReference Include="MySql.Data" Version="6.9.12" />
+  <ItemGroup Condition="'$(UseMySqlData)' == 'true' And '$(TargetFramework)' != 'net35'">
+    <PackageReference Include="MySql.Data" Version="6.9.12" PrivateAssets="all" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net48' Or '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'netstandard2.1'">
-    <PackageReference Include="MySql.Data" Version="9.5.0" />
+  <ItemGroup Condition="'$(UseMySqlConnector)' == 'true'">
+    <PackageReference Include="MySqlConnector" Version="2.3.7" PrivateAssets="all" />
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.18.1" PrivateAssets="all" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="Dependencies\MySql.Data.dll" Condition="Exists('Dependencies\MySql.Data.dll')">
-      <Pack>true</Pack>
-      <PackagePath>lib\net35</PackagePath>
-    </None>
+  <ItemGroup Condition="Exists('Dependencies\MySql.Data.dll')">
+    <None Include="Dependencies\MySql.Data.dll" Pack="true" PackagePath="lib\net35" />
+    <None Include="$(NuGetPackageRoot)mysql.data\6.9.12\lib\net40\MySql.Data.dll" Pack="true" PackagePath="lib\net40" />
+    <None Include="$(NuGetPackageRoot)mysql.data\6.9.12\lib\net45\MySql.Data.dll" Pack="true" PackagePath="lib\net45;lib\net46" />
+    <None Include="Dependencies\I18N*.dll" Pack="true" PackagePath="lib\net35;lib\net40;lib\net45;lib\net46" />
+    <None Include="Dependencies\System.Configuration.Install.dll" Pack="true" PackagePath="lib\net35;lib\net40;lib\net45;lib\net46" />
   </ItemGroup>
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+  <Import Project="..\OxideILRepack.targets" Condition="Exists('..\OxideILRepack.targets')" />
   <Target Name="ChangeAliasesOfStrongNameAssemblies" BeforeTargets="FindReferenceAssembliesForReferences;ResolveReferences">
     <ItemGroup>
       <ReferencePath Condition="'%(FileName)' == 'Oxide.References'">

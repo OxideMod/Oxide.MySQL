@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ShouldILRepack>false</ShouldILRepack>
+    <ShouldILRepack Condition="'$(TargetFramework)' == 'net48' Or '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'netstandard2.1'">true</ShouldILRepack>
+  </PropertyGroup>
+  <Target Name="ILRepack" AfterTargets="Build" Condition="'$(ShouldILRepack)' == 'true'">
+    <Message Text="[ILRepack] Starting merge for $(TargetFramework)..." Importance="high" />
+    <PropertyGroup>
+      <PrimaryAssembly>$(OutputPath)$(TargetName)$(TargetExt)</PrimaryAssembly>
+      <MergedOutputPath>$(OutputPath)merged\$(TargetName)$(TargetExt)</MergedOutputPath>
+      <InternalizeExcludeFile>$(MSBuildThisFileDirectory)ILRepack.Exclude.txt</InternalizeExcludeFile>
+      <ILRepackExe>$(NuGetPackageRoot)ilrepack\2.0.18\tools\ILRepack.exe</ILRepackExe>
+      <ILRepackExe Condition="!Exists('$(ILRepackExe)')">$(USERPROFILE)\.nuget\packages\ilrepack\2.0.18\tools\ILRepack.exe</ILRepackExe>
+    </PropertyGroup>
+    <ItemGroup>
+      <DependencyToMerge Include="MySqlConnector" />
+      <DependencyToMerge Include="System.Buffers" />
+      <DependencyToMerge Include="System.Diagnostics.DiagnosticSource" />
+      <DependencyToMerge Include="System.Memory" />
+      <DependencyToMerge Include="System.Numerics.Vectors" />
+      <DependencyToMerge Include="System.Runtime.CompilerServices.Unsafe" />
+      <DependencyToMerge Include="System.Threading.Tasks.Extensions" />
+      <DependencyToMerge Include="Microsoft.Extensions.Logging.Abstractions" />
+    </ItemGroup>
+    <ItemGroup>
+      <MergeAssemblies Include="$(PrimaryAssembly)" />
+      <MergeAssemblies Include="$(OutputPath)%(DependencyToMerge.Identity).dll" Condition="Exists('$(OutputPath)%(DependencyToMerge.Identity).dll')" />
+    </ItemGroup>
+    <PropertyGroup>
+      <ILRepackArgs>/parallel /internalize:$(InternalizeExcludeFile) /copyattrs /allowMultiple /allowDup /union /target:library /out:$(MergedOutputPath) /lib:$(OutputPath) @(MergeAssemblies, ' ')</ILRepackArgs>
+    </PropertyGroup>
+    <MakeDir Directories="$(OutputPath)merged" />
+    <Exec Command="&quot;$(ILRepackExe)&quot; $(ILRepackArgs)" WorkingDirectory="$(ProjectDir)" />
+    <Message Text="[ILRepack] Merge completed, replacing original assembly..." Importance="high" />
+    <Copy SourceFiles="$(MergedOutputPath)" DestinationFiles="$(PrimaryAssembly)" />
+    <Copy SourceFiles="$(OutputPath)merged\$(TargetName).pdb" DestinationFiles="$(OutputPath)$(TargetName).pdb" Condition="Exists('$(OutputPath)merged\$(TargetName).pdb')" />
+    <RemoveDir Directories="$(OutputPath)merged" />
+    <ItemGroup>
+      <FilesToDelete Include="$(OutputPath)%(DependencyToMerge.Identity).dll" />
+      <FilesToDelete Include="$(OutputPath)%(DependencyToMerge.Identity).xml" />
+      <FilesToDelete Include="$(OutputPath)$(TargetName).deps.json" />
+    </ItemGroup>
+    <Delete Files="@(FilesToDelete)" ContinueOnError="true" />
+    <Message Text="[ILRepack] Cleanup completed successfully!" Importance="high" />
+  </Target>
+
+</Project>
