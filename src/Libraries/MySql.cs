@@ -1,8 +1,4 @@
-#if USE_MYSQLCONNECTOR
 using MySqlConnector;
-#else
-using MySql.Data.MySqlClient;
-#endif
 using Oxide.Core.Database;
 using Oxide.Core.Libraries;
 using Oxide.Core.Plugins;
@@ -225,13 +221,8 @@ namespace Oxide.Core.MySql.Libraries
         [LibraryFunction("OpenDb")]
         public Connection OpenDb(string host, int port, string database, string user, string password, Plugin plugin, bool persistent = false)
         {
-#if NET48 || NETSTANDARD2_0 || NETSTANDARD2_1
             // MySQL 8.0+ compatibility for newer target frameworks
             return OpenDb($"Server={host};Port={port};Database={database};User={user};Password={password};Pooling=false;default command timeout=120;Allow Zero Datetime=true;SslMode=Disabled;AllowPublicKeyRetrieval=true;CharSet=utf8mb4;", plugin, persistent);
-#else
-            // Older frameworks keep original connection string for backwards compatibility
-            return OpenDb($"Server={host};Port={port};Database={database};User={user};Password={password};Pooling=false;default command timeout=120;Allow Zero Datetime=true;", plugin, persistent);
-#endif
         }
 
         public Connection OpenDb(string conStr, Plugin plugin, bool persistent = false)

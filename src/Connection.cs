@@ -1,19 +1,8 @@
-#if NET35
-using System.Security.Permissions;
-#endif
-#if USE_MYSQLCONNECTOR
 using MySqlConnector;
-#else
-using MySql.Data.MySqlClient;
-#endif
 using Oxide.Core.Plugins;
 
 namespace Oxide.Ext.MySql
 {
-#if NET35
-    [ReflectionPermission(SecurityAction.Deny, Flags = ReflectionPermissionFlag.AllFlags)]
-#endif
-
     public sealed class Connection
     {
         internal string ConnectionString { get; set; }
